@@ -1378,7 +1378,13 @@ function updateMasterData() {
 /* ===== 単語データのクラウド保存（Firebase Realtime Database） =====
    手書きメモと同じ合言葉・同じ場所（memos/合言葉/kiku）を使う。
    合言葉は手書きメモと同じ localStorage のキー（memo_key）に置くので、同じブラウザなら共有される。 */
-var CLOUD_DB = 'https://kiku990-a838d-default-rtdb.asia-southeast1.firebasedatabase.app';
+/* Firebase の接続先：この端末で「自分の Firebase」を設定していればそれ（localStorage の fb_db・同じサイトのアプリで共通）、なければ既定 */
+var DEF_DB = 'https://kiku990-a838d-default-rtdb.asia-southeast1.firebasedatabase.app';
+function normDb(u) { var m = String(u || '').replace(/^\s+|\s+$/g, '').match(/^(https:\/\/[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:firebasedatabase\.app|firebaseio\.com))(?:\/.*)?$/i); return m ? m[1].toLowerCase() : ''; }
+function dbFromText(t) { var m = String(t || '').match(/[#&?]db=([^&#]+)/); if (!m) return ''; try { return normDb(decodeURIComponent(m[1])); } catch (e) { return ''; } }
+function savedDb() { try { return normDb(localStorage.getItem('fb_db')); } catch (e) { return ''; } }
+function saveDb(u) { try { if (u && u !== DEF_DB) localStorage.setItem('fb_db', u); else localStorage.removeItem('fb_db'); } catch (e) {} }
+var CLOUD_DB = savedDb() || DEF_DB;
 var CLOUD_NODE = 'memovocab';
 var SRC_APP = '/tegaki-memo/'; // 元の英文を開くアプリ（英文リーダーなど）。空ならボタンを出さない   // 単語帳ごとの保存場所（memos/合言葉/この名前）
 function cloudKey() {
@@ -2023,6 +2029,7 @@ setInterval(function () {
 function cloudKeyFromHash() {
   if (!/[#&]k=/.test(location.hash)) return null;
   var key = cloudKeyFromText(location.hash);
+  var hdb = dbFromText(location.hash); if (hdb) { saveDb(hdb); CLOUD_DB = hdb; }
   try {
     history.replaceState(null, '', location.href.split('#')[0]);
   } catch (e) {
