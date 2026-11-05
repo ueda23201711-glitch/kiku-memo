@@ -1,4 +1,4 @@
-const CACHE_NAME = "kikutan-memo-v30";
+const CACHE_NAME = "kikutan-memo-v31";
 const ASSETS = [
   "./",
   "./index.html",
